@@ -26,6 +26,8 @@ var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var restler = require('restler');
+var sys = require('util');
 
 var assertFileExists = function(infile) {
   var instr = infile.toString();
@@ -61,14 +63,35 @@ var clone = function(fn) {
               return fn.bind({});
 };
 
+
 if(require.main == module) {
-      program
-              .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
-                      .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
-                              .parse(process.argv);
-                                  var checkJson = checkHtmlFile(program.file, program.checks);
-                                      var outJson = JSON.stringify(checkJson, null, 4);
-                                          console.log(outJson);
+    program
+    .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
+    .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+    .option('-u, --url <file_url>', 'Url to the index.html')
+    .parse(process.argv);
+
+  var file2check;
+  if(program.url){
+    restler.get(program.url).on('complete', function(result) {
+      if (result instanceof Error){
+        sys.puts("Error:" + result.message);
+        this.retry(5000);
+      } else {
+        file2check = 'temp_loaded_html';
+        fs.writeFileSync(file2check, result);
+        var checkJson = checkHtmlFile(file2check, program.checks);
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
+
+      }
+    });
+  } else {
+    file2check = result;
+    var checkJson = checkHtmlFile(file2check, program.checks);
+    var outJson = JSON.stringify(checkJson, null, 4);
+    console.log(outJson);
+  }  
 } else {
       exports.checkHtmlFile = checkHtmlFile;
 }
