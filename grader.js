@@ -87,7 +87,7 @@ if(require.main == module) {
       }
     });
   } else {
-    file2check = result;
+    file2check = program.file;
     var checkJson = checkHtmlFile(file2check, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
     console.log(outJson);
